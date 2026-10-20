@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Only replace the stock notification service in a reachable desktop session.
+set -euo pipefail
+omarchy-shell shell ping >/dev/null
+omarchy-shell shell rescanPlugins >/dev/null
+found=0
+for ((attempt = 0; attempt < 40; attempt++)); do
+  if omarchy plugin list --json | jq -e 'any(.[]; .id == "dotfiles.notifications")' >/dev/null; then
+    found=1
+    break
+  fi
+  sleep 0.05
+done
+if (( ! found )); then
+  echo 'dotfiles.notifications was not discovered; current notifications have not been changed.' >&2
+  exit 1
+fi
+backup="$HOME/.local/state/omarchy-plugins/backups/notification-timeout-$(date +%Y%m%d-%H%M%S)"
+mkdir -m 700 -p "$backup"
+cp -L "$HOME/.config/omarchy/shell.json" "$backup/shell.json"
+printf 'Previous shell configuration: %s\n' "$backup/shell.json"
+omarchy plugin enable dotfiles.notifications
+for ((attempt = 0; attempt < 50; attempt++)); do
+  if [[ $(omarchy-shell notifications ping 2>/dev/null) == ok ]]; then
+    echo 'Notification timeout enabled: critical notifications expire after 15 seconds.'
+    exit 0
+  fi
+  sleep 0.1
+done
+echo 'Notification service did not respond; restoring the stock service.' >&2
+omarchy plugin enable omarchy.notifications >&2
+exit 1

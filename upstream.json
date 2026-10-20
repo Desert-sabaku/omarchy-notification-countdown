@@ -1,0 +1,10 @@
+{
+  "source": "https://github.com/omacom/omarchy/tree/master/shell/plugins/notifications",
+  "sha256": {
+    "NotificationLogic.js": "99e82df6524ee1ee1d52673b2a1496f62b14b220288f186c41fd8deed77a69bd",
+    "Service.qml": "11665542e70df80ccd3c785a6143dee2daefd2082e4f75c740adc2c9947cf7c2",
+    "manifest.json": "82ed1a26f0040ddff78dd0ed1f12c5e4b49929ec5d0efc7ea62bedabbf48e910",
+    "components/NotificationCard.qml": "3620ab43732277ac7f1ae04c78544b9648c3b33e2b7a6b6465f02b7cfb70e769"
+  },
+  "packageVersion": "4.0.6-1"
+}
