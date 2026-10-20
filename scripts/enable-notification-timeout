@@ -21,12 +21,13 @@ cp -L "$HOME/.config/omarchy/shell.json" "$backup/shell.json"
 printf 'Previous shell configuration: %s\n' "$backup/shell.json"
 omarchy plugin enable dotfiles.notifications
 for ((attempt = 0; attempt < 50; attempt++)); do
-  if [[ $(omarchy-shell notifications ping 2>/dev/null) == ok ]]; then
+  if omarchy-shell notifications implementation 2>/dev/null |
+      jq -e '.pluginId == "dotfiles.notifications" and .version == "1.0.1" and .criticalPopupDuration == 15000 and .sharedCountdown == true' >/dev/null; then
     echo 'Notification timeout enabled: critical notifications expire after 15 seconds.'
     exit 0
   fi
   sleep 0.1
 done
-echo 'Notification service did not respond; restoring the stock service.' >&2
+echo 'Could not verify notification implementation 1.0.1; restoring stock. After updating, run: omarchy restart shell' >&2
 omarchy plugin enable omarchy.notifications >&2
 exit 1

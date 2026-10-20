@@ -95,6 +95,30 @@ Item {
   // many `showHistory` can replay.
   readonly property int historyLimit: 10
 
+  readonly property string implementationVersion: "1.0.1"
+  property int clockRevision: 0
+
+  // Outside Variants: each notification has a single timer on all screens.
+  Instantiator {
+    id: popupClocks
+    model: popupModel
+    delegate: PopupClock {
+      required property int index
+      required property int urgency
+      required property double expireTimeout
+      required property string summary
+      required property string body
+      required property string image
+      lifetime: service.durationFor(urgency, expireTimeout)
+      onSummaryChanged: reset()
+      onBodyChanged: reset()
+      onImageChanged: reset()
+      onExpired: service.expirePopup(index)
+    }
+    onObjectAdded: service.clockRevision++
+    onObjectRemoved: service.clockRevision++
+  }
+
   readonly property int criticalPopupDuration: 15000
   readonly property int lowPopupDuration: 5000
   readonly property int normalPopupDuration: 8000
@@ -925,6 +949,15 @@ Item {
     }
 
     function ping(): string { return "ok" }
+
+    function implementation(): string {
+      return JSON.stringify({
+        pluginId: "dotfiles.notifications",
+        version: service.implementationVersion,
+        criticalPopupDuration: service.criticalPopupDuration,
+        sharedCountdown: true
+      })
+    }
   }
 
   // ---------------------------------------------------- server
@@ -1011,32 +1044,15 @@ Item {
             Layout.alignment: Qt.AlignRight
             implicitHeight: card.implicitHeight
 
-            readonly property real lifetime: service.durationFor(cardSlot.urgency, cardSlot.expireTimeout)
-            property real remainingLifetime: 1.0
-            readonly property bool ticking: cardSlot.lifetime > 0 && !card.hovered
+            readonly property var lifetimeClock: {
+              service.clockRevision
+              return popupClocks.objectAt(cardSlot.index)
+            }
 
-            // A client updating this notification in place rewrites the row
-            // under the card (see refreshPopup). New text deserves a full look,
-            // so the countdown starts over instead of running out the clock the
-            // superseded text was already most of the way through. Delegates
-            // keep their own row as the model changes around them, so only a
-            // real content change lands here.
-            onSummaryChanged: cardSlot.remainingLifetime = 1.0
-            onBodyChanged: cardSlot.remainingLifetime = 1.0
-            onImageChanged: cardSlot.remainingLifetime = 1.0
-
-            Timer {
-              interval: 50
-              repeat: true
-              running: cardSlot.ticking
-              onTriggered: {
-                if (cardSlot.lifetime <= 0) return
-                cardSlot.remainingLifetime -= 50.0 / cardSlot.lifetime
-                if (cardSlot.remainingLifetime <= 0) {
-                  cardSlot.remainingLifetime = 0
-                  service.expirePopup(cardSlot.index)
-                }
-              }
+            PopupHover {
+              clock: cardSlot.lifetimeClock
+              screenName: popupWindow.screen.name
+              hovered: card.hovered
             }
 
             NotificationCard {
@@ -1052,8 +1068,8 @@ Item {
               cornerRadius: service.cornerRadius
               fontFamily: service.shell && service.shell.bar ? service.shell.bar.fontFamily : ""
               glyph: cardSlot.glyph
-              lifetime: cardSlot.lifetime
-              remainingLifetime: cardSlot.remainingLifetime
+              lifetime: cardSlot.lifetimeClock ? cardSlot.lifetimeClock.lifetime : 0
+              remainingLifetime: cardSlot.lifetimeClock ? cardSlot.lifetimeClock.remainingLifetime : 1
 
               onCloseRequested: service.dismissPopup(cardSlot.index)
               onCardClicked: service.invokePopupDefault(cardSlot.index)

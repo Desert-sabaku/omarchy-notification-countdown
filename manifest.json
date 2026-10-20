@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "dotfiles.notifications",
   "name": "Notification countdown",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "Desert-sabaku",
   "description": "Expire critical notifications after 15 seconds and display a remaining-lifetime bar.",
   "kinds": [
