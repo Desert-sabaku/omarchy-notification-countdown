@@ -21,7 +21,7 @@ This repository contains an Omarchy shell plugin with `manifest.json` at its roo
 To install the plugin from a normal desktop terminal:
 
 ```sh
-omarchy plugin add [https://github.com/Desert-sabaku/omarchy-notification-countdown.git](https://github.com/Desert-sabaku/omarchy-notification-countdown.git) --enable
+omarchy plugin add https://github.com/Desert-sabaku/omarchy-notification-countdown.git --enable
 
 ```
 
