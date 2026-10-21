@@ -22,12 +22,12 @@ printf 'Previous shell configuration: %s\n' "$backup/shell.json"
 omarchy plugin enable dotfiles.notifications
 for ((attempt = 0; attempt < 50; attempt++)); do
   if omarchy-shell notifications implementation 2>/dev/null |
-      jq -e '.pluginId == "dotfiles.notifications" and .version == "1.0.1" and .criticalPopupDuration == 15000 and .sharedCountdown == true' >/dev/null; then
+      jq -e '.pluginId == "dotfiles.notifications" and .version == "1.0.2" and .criticalPopupDuration == 15000 and .sharedCountdown == true and .payloadTransport == "stdin" and .storageReady == true' >/dev/null; then
     echo 'Notification timeout enabled: critical notifications expire after 15 seconds.'
     exit 0
   fi
   sleep 0.1
 done
-echo 'Could not verify notification implementation 1.0.1; restoring stock. After updating, run: omarchy restart shell' >&2
+echo 'Could not verify notification implementation 1.0.2; restoring stock. After updating, run: omarchy restart shell' >&2
 omarchy plugin enable omarchy.notifications >&2
 exit 1

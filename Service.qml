@@ -98,7 +98,7 @@ Item {
   // many `showHistory` can replay.
   readonly property int historyLimit: 10
 
-  readonly property string implementationVersion: "1.0.1"
+  readonly property string implementationVersion: "1.0.2"
   property int clockRevision: 0
 
   // Outside Variants: each notification has a single timer on all screens.
