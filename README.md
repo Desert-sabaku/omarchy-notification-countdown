@@ -54,7 +54,7 @@ links through dotfiles instead of invoking `plugin remove` on a development chec
 ## Compatibility and validation
 
 Based on installed Omarchy `4.0.6-1`. This fork uses shell internals; future compatibility is not guaranteed.
-Requirements: Omarchy 4 / Quickshell and its usual dependencies. Developer tests additionally require Python 3 and Node.js.
+Requirements: Omarchy 4 / Quickshell, Python 3.9+ at runtime, and the usual Omarchy dependencies. Developer tests additionally require Node.js and the Qt QML test tools.
 
 ```sh
 omarchy plugin validate .
@@ -79,3 +79,25 @@ MIT; upstream copyright is retained in LICENSE. See THIRD_PARTY.md for attributi
 [Omarchy issue #9361](https://github.com/omacom/omarchy/issues/9361) proposes bounded critical lifetimes and a decreasing
 bar; no novelty is claimed. [byj-omarchy-notifications](https://github.com/BitYoungjae/byj-omarchy-notifications) is a
 notification history/unread plugin alongside the stock daemon, rather than a popup countdown replacement.
+
+## Privacy and existing storage
+
+Notification JSON and image paths are sent to a Python storage helper through private stdin pipes, never as
+process arguments or environment variables. Storage reads return through stdout pipes without logging payloads.
+The helper sets a restrictive umask, enforces directories at 0700 and regular files at 0600, and atomically replaces
+new files. On startup it repairs existing `~/.local/state/omarchy/notifications/` history/image files and the
+legacy `~/.local/state/omarchy/notifications.json` settings file before the service reads or writes them.
+The application state root itself is also made owner-only; unrelated state files inside it are not rewritten.
+Unexpected symlinks, non-regular files or files owned by another account stop persistence rather than following
+or modifying their targets. Popups may still be shown if persistence is disabled; storage failures are logged
+without notification text. Images remain limited to 5 MiB with a bounded read; stdin jobs are limited to 16 MiB.
+
+Updating files does not replace an already running keepLoaded service. After deploying version 1.0.2, restart
+Omarchy shell from an unlocked desktop session. To repair existing permissions separately, from this checkout:
+
+```sh
+python3 scripts/notification-store.py repair "$HOME/.local/state/omarchy"
+```
+
+Owner-only modes protect against other local accounts. They do not encrypt stored notifications or protect
+against root or other processes running under your own account.
